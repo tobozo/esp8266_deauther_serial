@@ -144,14 +144,22 @@ void handleSerialClient() {
       SerialPrintJSON("SELECTED Client #" + msgNumStr);
       clientScan.select(msgNum);
       attack.stop(0);
+    } else {
+      SerialPrintJSON("INVALID Client #" + msgNumStr);
     }
+    Serial.println( clientScan.getResults() ); 
     
   } else if(msg.startsWith("apjson ")) { // sendAPResults(xx)
     msgNumStr = msg.substring(7);
     msgNum = msgNumStr.toInt();
     if(msgNum>-1) {
       Serial.println( apScan.getResult(msgNum) );
+    } else {
+      SerialPrintJSON("ERROR INVALID AP ");
     }
+    
+  } else if(msg=="reset") {
+    ESP.reset(); 
     
   } else if(msg=="clear") {
     nameList.clear(); 
@@ -165,6 +173,8 @@ void handleSerialClient() {
       } else {
         SerialPrintJSON("ERROR,AP Not Found:" + msgNumStr);
       }
+    } else {
+      SerialPrintJSON("ERROR INVALID AP ");
     }
     
   } else if(msg.startsWith("apselect ")) { // selectAP(x)
@@ -177,6 +187,8 @@ void handleSerialClient() {
         SerialPrintJSON("UNSELECTED AP #" + String(msgNum) + "/" +  msgNumStr);
       }
       attack.stopAll();
+    } else {
+      SerialPrintJSON("ERROR INVALID AP ");
     }
     
   } else if(msg.startsWith("cset ")) { // setClientName(x)
@@ -185,6 +197,8 @@ void handleSerialClient() {
     if(msgNumStr!="") {
       SerialPrintJSON("Adding " + msgNumStr + " to namelist");
       nameList.add(clientScan.getClientMac(clientScan.lastSelected), msgNumStr);
+    } else {
+      SerialPrintJSON("ERROR INVALID Client");
     }
     
   } else if(msg.startsWith("attack ")) { // attack(x)
@@ -194,7 +208,11 @@ void handleSerialClient() {
       if(apScan.selected > -1 || msgNum == 3){
         attack.start(msgNum);
         SerialPrintJSON("ATTACK Client #" + msgNumStr);
+      } else {
+        SerialPrintJSON("ERROR no AP selected");
       }
+    } else {
+      SerialPrintJSON("ERROR INVALID Client");
     }
     
   }

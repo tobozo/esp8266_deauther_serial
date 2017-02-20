@@ -15,8 +15,8 @@ void ClientScan::start(int _time){
 
   startTime = millis();
 
-  Serial.print("starting scan on: ");
-  target._println();
+  //Serial.print("starting scan on: ");
+  //target._println();
 
   wifi_promiscuous_enable(0);
   WiFi.disconnect();
