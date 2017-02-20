@@ -23,20 +23,6 @@ int APScan::scan(){
 
 
 
-
-
-bool APScan::process(int i) {
-    Mac _ap;
-    _ap.set(WiFi.BSSID(i)[0],WiFi.BSSID(i)[1],WiFi.BSSID(i)[2],WiFi.BSSID(i)[3],WiFi.BSSID(i)[4],WiFi.BSSID(i)[5]);
-    aps.add(_ap);
-    channels[i] = WiFi.channel(i);
-    rssi[i] = WiFi.RSSI(i);
-    getEncryption(WiFi.encryptionType(i)).toCharArray(encryption[i],5);
-    WiFi.SSID(i).toCharArray(names[i],33);
-    data_getVendor(WiFi.BSSID(i)[0],WiFi.BSSID(i)[1],WiFi.BSSID(i)[2]).toCharArray(vendors[i],9);  
-}
-
-
 bool APScan::start(){
     aps._clear();
     selected = -1;
@@ -44,8 +30,7 @@ bool APScan::start(){
     asyncIndex = -1;
     
     for(int i=0;i<results && i<ApScanMaxResults;i++){
-      process(i);
-      /*
+      
       Mac _ap;
       _ap.set(WiFi.BSSID(i)[0],WiFi.BSSID(i)[1],WiFi.BSSID(i)[2],WiFi.BSSID(i)[3],WiFi.BSSID(i)[4],WiFi.BSSID(i)[5]);
       aps.add(_ap);
@@ -54,7 +39,7 @@ bool APScan::start(){
       getEncryption(WiFi.encryptionType(i)).toCharArray(encryption[i],5);
       WiFi.SSID(i).toCharArray(names[i],33);
       data_getVendor(WiFi.BSSID(i)[0],WiFi.BSSID(i)[1],WiFi.BSSID(i)[2]).toCharArray(vendors[i],9);
-      */
+      
     }
     return true;
 }
@@ -131,31 +116,19 @@ String APScan::getResults(){
   return json;
 }
 
-String APScan::getResultByAPName(String apName, bool asjson){
-  String json = "{ \"aps\":[ ";
+int APScan::getResultByAPName(String apName){
   for(int i=0;i<results && i<ApScanMaxResults;i++){
-    if(apName!=getAPName(i)) continue;
-    if(!asjson) return String(i);
-    json += "{";
-    json += "\"id\": "+(String)i+",";
-    json += "\"channel\": "+(String)getAPChannel(i)+",";
-    json += "\"mac\": \""+getAPMac(i)+"\",";
-    json += "\"ssid\": \""+getAPName(i)+"\",";
-    json += "\"rssi\": "+(String)getAPRSSI(i)+",";
-    json += "\"encryption\": \""+getAPEncryption(i)+"\",";
-    json += "\"vendor\": \""+getAPVendor(i)+"\",";
-    json += "\"selected\": "+getAPSelected(i);
-    json += "}";
-    if((i!=results-1) && (i!=ApScanMaxResults-1)) json += ",";
+    if(apName!=getAPName(i) && apName!=getAPMac(i)) continue;
+    return i;
   }
-  json += "] }";
-  return asjson ? json : "-1";
+  return -1;
 }
 
 
-void APScan::select(int num){
+int APScan::select(int num){
   if(selected != num) selected = num;
   else selected = -1;
+  return selected;
 }
 
     

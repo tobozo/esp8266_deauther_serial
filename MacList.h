@@ -1,7 +1,7 @@
 #ifndef MacList_h
 #define MacList_h
 
-#define listLen 40
+#define listLen 30
 
 #include "Mac.h"
 

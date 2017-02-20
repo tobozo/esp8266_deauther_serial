@@ -1,7 +1,7 @@
 #ifndef APScan_h
 #define APScan_h
 
-#define ApScanMaxResults 40
+#define ApScanMaxResults 30
 
 #include "ESP8266WiFi.h"
 #include "Mac.h"
@@ -19,8 +19,8 @@ class APScan{
     bool setAsyncIndex();
     String getResult(int i);
     String getResults();
-    String getResultByAPName(String apName, bool asjson);
-    void select(int num);
+    int getResultByAPName(String apName);
+    int select(int num);
     
     String getAPName(int num);
     String getAPEncryption(int num);

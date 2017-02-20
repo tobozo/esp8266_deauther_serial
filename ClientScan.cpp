@@ -15,9 +15,8 @@ void ClientScan::start(int _time){
 
   startTime = millis();
 
-  Serial.println();
   Serial.print("starting scan on: ");
-  target._print();
+  target._println();
 
   wifi_promiscuous_enable(0);
   WiFi.disconnect();
@@ -31,7 +30,7 @@ bool ClientScan::stop(){
   if(curTime - startTime >= timeout*1000){
     sniffing = false;
     wifi_promiscuous_enable(0);
-    
+    /*
     for(int i=0;i<results && i<maxResults;i++){
       Serial.print(i);
       Serial.print(": ");
@@ -43,7 +42,7 @@ bool ClientScan::stop(){
       Serial.print(" ");
       Serial.print(getClientSelected(i));
       Serial.println("");
-    }
+    }*/
   
     return true;
   }
@@ -70,12 +69,11 @@ void ClientScan::packetSniffer(uint8_t *buf, uint16_t len){
         results++;
         packets[clients.add(to)]++;
       }else packets[clientNum]++;
-      
-      Serial.println("");
+      /*
       Serial.print("found: ");
       from._print();
       Serial.print(" => ");
-      to._print();
+      to._println();*/
       
     }
   }
