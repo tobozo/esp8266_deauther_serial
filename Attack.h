@@ -17,7 +17,7 @@ extern "C" {
 #define deauthsPerSecond 10
 
 #define beaconPerSecond 10
-#define randomBeacons 50
+#define randomBeacons 80
 #define SSIDLen 32
 #define randomBeaconChange 3
 #define beaconChannel 10
@@ -40,7 +40,7 @@ class Attack
     void stopAll();
     void stop(int num);
   private:
-    void generatePacket();
+    void generateBeaconPacket();
     bool send(uint8_t buf[], int len);
     
     const String attackNames[attackNum] = {"deauth selected","deauth all","beacon spam","random beacon spam"};
@@ -80,7 +80,7 @@ class Attack
     uint8_t beaconPacket_header[36] = { 
                 0x80, 0x00, 
                 0x00, 0x00, //beacon
-                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //destination: broadcast
+                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, //destination: broadcast
                 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //source
                 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //source
                 0xc0, 0x6c, 
