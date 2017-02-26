@@ -9,7 +9,7 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
+
 
 
 extern "C" {
@@ -67,8 +67,8 @@ void startWifi(){
   WiFi.softAP(deautherssid, deautherpassword);
 }
 
-void SerialPrintJSON(String msg) {
-  Serial.println("{\"message\":[\""+msg+"\"]}");
+void SerialPrintJSON(String title, String msg) {
+  Serial.println("{\""+title+"\":[\""+msg+"\"]}");
 }
 
 
@@ -82,7 +82,7 @@ void handleSerialClient() {
   msg.trim();
   
   if(msg=="*") {
-    SerialPrintJSON( helpMessages[helpMessagesPos] );
+    SerialPrintJSON( "motd", helpMessages[helpMessagesPos] );
     helpMessagesPos++;
     if( helpMessagesPos < helpMessageSize ) {
       // continue with async printing
@@ -92,16 +92,17 @@ void handleSerialClient() {
 
   } else if(msg=="cscan") { // startClientScan
     if(apScan.selected > -1 && !clientScan.sniffing) {
-      SerialPrintJSON("CLIENT SCAN START");
+      SerialPrintJSON("cscan", "CLIENT SCAN START");
       clientScan.start(10);
       attack.stop(0);
     } else {
-      SerialPrintJSON("CLIENT SCAN SKIPPED");
+      SerialPrintJSON("cscan", "CLIENT SCAN SKIPPED");
     }
     
   } else if(msg=="apscan") { // startAPScan
-
+    SerialPrintJSON("apscan", "AP SCAN START");
     if(apScan.start()) {
+      SerialPrintJSON("apscan", "AP SCAN DONE");
       attack.stopAll();
       apScan.setAsyncIndex();
       incomingSerialData = "aplist";
@@ -109,26 +110,33 @@ void handleSerialClient() {
     }
 
   } else if(msg=="aplist") { // 
+
     if(apScan.results==0) {
       incomingSerialData = "apscan";
       return;
     }
 
     if(apScan.asyncIndex>=0) {
+      
       Serial.println(apScan.getResult(apScan.asyncIndex));
+      
       apScan.asyncIndex--;
       
       if(apScan.asyncIndex<0) {
         // scan done, reset async index
         apScan.setAsyncIndex();
+        SerialPrintJSON("aplist-last-id", String(apScan.asyncIndex));
+
+        // infinite loop !
+        incomingSerialData = "aplist";
+        return;
+
         
       } else {
         // continue with async printing
+        delay(300);
         return;
       }
-    } else {
-      // list done, reset async index
-      apScan.setAsyncIndex();
     }
   
   } else if(msg=="cjson") { // sendClientResults
@@ -141,11 +149,11 @@ void handleSerialClient() {
     msgNumStr = msg.substring(8);
     msgNum = msgNumStr.toInt();
     if(msgNum>-1) {
-      SerialPrintJSON("SELECTED Client #" + msgNumStr);
+      SerialPrintJSON("client", "SELECTED Client #" + msgNumStr);
       clientScan.select(msgNum);
       attack.stop(0);
     } else {
-      SerialPrintJSON("INVALID Client #" + msgNumStr);
+      SerialPrintJSON("client", "INVALID Client #" + msgNumStr);
     }
     Serial.println( clientScan.getResults() ); 
     
@@ -155,7 +163,7 @@ void handleSerialClient() {
     if(msgNum>-1) {
       Serial.println( apScan.getResult(msgNum) );
     } else {
-      SerialPrintJSON("ERROR INVALID AP ");
+      SerialPrintJSON("apjson", "ERROR INVALID AP ");
     }
     
   } else if(msg=="reset") {
@@ -171,10 +179,10 @@ void handleSerialClient() {
       if(apNum>-1) {
         Serial.println(apScan.getResult(apNum));
       } else {
-        SerialPrintJSON("ERROR,AP Not Found:" + msgNumStr);
+        SerialPrintJSON("apget", "ERROR,AP Not Found:" + msgNumStr);
       }
     } else {
-      SerialPrintJSON("ERROR INVALID AP ");
+      SerialPrintJSON("apget", "ERROR INVALID AP ");
     }
     
   } else if(msg.startsWith("apselect ")) { // selectAP(x)
@@ -182,23 +190,25 @@ void handleSerialClient() {
     msgNum = msgNumStr.toInt();
     if(msgNum>-1) {
       if(apScan.select(msgNum)>-1) {
-        SerialPrintJSON("SELECTED AP #" + String(msgNum) + "/" +  msgNumStr);
+        Serial.println(apScan.getResult(msgNum));
+        //SerialPrintJSON("apselect", "SELECTED AP:" + String(msgNum));
       } else {
-        SerialPrintJSON("UNSELECTED AP #" + String(msgNum) + "/" +  msgNumStr);
+        Serial.println(apScan.getResult(msgNum));
+        //SerialPrintJSON("apselect", "UNSELECTED AP:" + String(msgNum));
       }
       attack.stopAll();
     } else {
-      SerialPrintJSON("ERROR INVALID AP ");
+      SerialPrintJSON("apselect", "ERROR INVALID AP ");
     }
     
   } else if(msg.startsWith("cset ")) { // setClientName(x)
     msgNumStr = msg.substring(5);
     //msgNum = msgNumStr.toInt();
     if(msgNumStr!="") {
-      SerialPrintJSON("Adding " + msgNumStr + " to namelist");
+      SerialPrintJSON("cset", "Adding " + msgNumStr + " to namelist");
       nameList.add(clientScan.getClientMac(clientScan.lastSelected), msgNumStr);
     } else {
-      SerialPrintJSON("ERROR INVALID Client");
+      SerialPrintJSON("cset", "ERROR INVALID Client");
     }
     
   } else if(msg.startsWith("attack ")) { // attack(x)
@@ -207,12 +217,12 @@ void handleSerialClient() {
     if(msgNum>-1) {
       if(apScan.selected > -1 || msgNum == 3){
         attack.start(msgNum);
-        SerialPrintJSON("ATTACK Client #" + msgNumStr);
+        SerialPrintJSON("attack", "ATTACK Client #" + msgNumStr);
       } else {
-        SerialPrintJSON("ERROR no AP selected");
+        SerialPrintJSON("attack", "ERROR no AP selected");
       }
     } else {
-      SerialPrintJSON("ERROR INVALID Client");
+      SerialPrintJSON("attack", "ERROR INVALID Client");
     }
     
   }
@@ -247,7 +257,7 @@ void loop() {
 
   if(clientScan.sniffing){
     if(clientScan.stop()){
-      SerialPrintJSON( "CLIENT SCAN DONE" );
+      SerialPrintJSON("clientscan", "CLIENT SCAN DONE" );
       Serial.println( clientScan.getResults() );
       startWifi();
     }
